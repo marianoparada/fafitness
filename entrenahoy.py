@@ -368,11 +368,11 @@ def main():
     if st.session_state.selected_action is None:
         if st.button("Entrenar por link de YouTube"):
             st.session_state.selected_action = "mostrar_link"
-            st.experimental_rerun()  # Forzar la recarga inmediata para ejecutar la función seleccionada
+            st.rerun()  # Forzar la recarga inmediata para ejecutar la función seleccionada
 
         if st.button("Generar rutina de entrenamiento"):
             st.session_state.selected_action = "generar_rutina"
-            st.experimental_rerun()  # Forzar la recarga inmediata para ejecutar la función seleccionada
+            st.rerun()  # Forzar la recarga inmediata para ejecutar la función seleccionada
 
     # Ejecutar la función seleccionada
     if st.session_state.selected_action == "mostrar_link":
