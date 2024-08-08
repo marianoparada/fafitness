@@ -71,6 +71,13 @@ def mostrar_banner():
     # Muestra el banner al azar
     st.image(banner_aleatorio, use_column_width=True)
 
+def mostrar_logo():
+    banners = ["logo.jpg"]  # Agrega todos tus banners aquí
+    # Selecciona un banner al azar
+    banner_aleatorio = random.choice(banners)
+    # Muestra el banner al azar
+    st.image(banner_aleatorio, use_column_width=True)
+
 def guardar_rutina_word(rutina):
     doc = Document()
     doc.add_heading('Fitness - Rutina Personalizada', 0)
@@ -358,7 +365,7 @@ def main():
     # Crear un menú lateral para seleccionar el tema
 
     # Mostrar el banner
-    mostrar_banner()
+    mostrar_logo()
 
     # Inicializar estado si no existe
     if 'selected_action' not in st.session_state:
