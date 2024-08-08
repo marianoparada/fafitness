@@ -65,7 +65,7 @@ def mostrar_link():
     st.markdown(f"[Abrir video en otra ventana]({video_link})")
 
 def mostrar_banner():
-    banners = ["entrena.png", "entrena1.png", "entrena2.png"]  # Agrega todos tus banners aquí
+    banners = ["entrena.png"]  # Agrega todos tus banners aquí
     # Selecciona un banner al azar
     banner_aleatorio = random.choice(banners)
     # Muestra el banner al azar
