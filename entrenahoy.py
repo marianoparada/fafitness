@@ -72,11 +72,14 @@ def mostrar_banner():
     st.image(banner_aleatorio, use_column_width=True)
 
 def mostrar_logo():
-    banners = ["logo.jpg"]  # Agrega todos tus banners aquí
-    # Selecciona un banner al azar
-    banner_aleatorio = random.choice(banners)
-    # Muestra el banner al azar
-    st.image(banner_aleatorio, use_column_width=True)
+    if 'logo_mostrado' not in st.session_state:
+        st.session_state.logo_mostrado = False
+
+    if not st.session_state.logo_mostrado:
+        left_co, cent_co, last_co = st.columns(3)
+        with cent_co:
+            st.image('logo.jpg')
+            st.session_state.logo_mostrado = True
 
 def guardar_rutina_word(rutina):
     doc = Document()
@@ -282,57 +285,49 @@ def temporizador(rutina):
         st.rerun()
 
 def generar_rutina_interface():
-    prioridad = st.selectbox(
-        "Selecciona la prioridad de tu rutina:",
-        ["Tren superior", "Zona media", "Tren inferior", "Aeróbico"]
-    )
+    if 'rutina_generada' not in st.session_state:
+        st.session_state.rutina_generada = False
 
-    duracion = st.selectbox(
-        "Selecciona la duración de los ejercicios:",
-        ["30 segundos", "40 segundos", "Ambos aleatorios"]
-    )
+    if not st.session_state.rutina_generada:
+        prioridad = st.selectbox(
+            "Selecciona la prioridad de tu rutina:",
+            ["Tren superior", "Zona media", "Tren inferior", "Aeróbico"]
+        )
 
-    tiempo_descanso = st.number_input(
-        "Selecciona el tiempo de descanso entre ejercicios (en segundos):",
-        min_value=5,
-        max_value=60,
-        value=15,
-        step=5
-    )
+        duracion = st.selectbox(
+            "Selecciona la duración de los ejercicios:",
+            ["30 segundos", "40 segundos", "Ambos aleatorios"]
+        )
 
-    vueltas = st.number_input(
-        "Número de vueltas:",
-        min_value=1,
-        max_value=6,
-        value=3
-    )
+        tiempo_descanso = st.number_input(
+            "Selecciona el tiempo de descanso entre ejercicios (en segundos):",
+            min_value=5,
+            max_value=60,
+            value=15,
+            step=5
+        )
 
-    if st.button("Generar Rutina", key="generar_rutina"):
-        with st.spinner("Generando rutina personalizada..."):
-            time.sleep(2)  # Espera 2 segundos
-            st.session_state.rutina = generar_rutina(prioridad, duracion, tiempo_descanso, vueltas)
-            st.session_state.prioridad = prioridad
-            st.session_state.duracion = duracion
-            st.session_state.tiempo_descanso = tiempo_descanso
-            st.session_state.vueltas = vueltas
-        st.success("¡Rutina generada con éxito!")
-        st.rerun()
+        vueltas = st.number_input(
+            "Número de vueltas:",
+            min_value=1,
+            max_value=6,
+            value=3
+        )
 
-    elif 'timer_running' not in st.session_state:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown(
-                """
-                <style>
-                div.stButton > button {
-                    width: 100%;
-                    height: 3em;
-                    font-size: 20px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
+        if st.button("Generar Rutina", key="generar_rutina"):
+            with st.spinner("Generando rutina personalizada..."):
+                time.sleep(2)  # Espera 2 segundos
+                st.session_state.rutina = generar_rutina(prioridad, duracion, tiempo_descanso, vueltas)
+                st.session_state.prioridad = prioridad
+                st.session_state.duracion = duracion
+                st.session_state.tiempo_descanso = tiempo_descanso
+                st.session_state.vueltas = vueltas
+                st.session_state.rutina_generada = True
+            st.success("¡Rutina generada con éxito!")
+            st.rerun()
+
+    else:
+        if 'timer_running' not in st.session_state:
             st.image("entrena3.png", use_column_width=True)
             if st.button("Comenzar Rutina", key="comenzar_rutina"):
                 st.session_state.timer_running = True
@@ -340,25 +335,28 @@ def generar_rutina_interface():
                 st.session_state.tiempo_restante = st.session_state.rutina[0][2]
                 st.rerun()
 
-            # guardar_rutina_word(st.session_state.rutina)
             st.title("Poné Musica ... ")
-            st.image("spotify.png", width=200)  # Ajusta el ancho según necesites
-            st.markdown(f"La música se abrirá en la aplicación, debes volver para hacer clic en COMENZAR RUTINA")
+            st.image("spotify.png", width=200)
+            st.markdown("La música se abrirá en la aplicación, debes volver para hacer clic en COMENZAR RUTINA")
 
-            # Función para crear un enlace con icono de música
             def spotify_link(text, url):
                 return st.markdown(f"🎵 [{text}]({url})")
 
-            # Lista de reproducción 1
             spotify_playlist_url1 = "https://open.spotify.com/intl-es/track/7BExBy99xIVD7moauE290a?si=5d08e19cd3fd4cd2"
             spotify_link("Lista de reproducción Inglés", spotify_playlist_url1)
 
-            # Lista de reproducción 2
             spotify_playlist_url2 = "https://open.spotify.com/intl-es/track/1hWpzhGIPOQ7gKz3ut5eVs?si=f3891cf314774ac0"
             spotify_link("Lista de reproducción Latino", spotify_playlist_url2)
 
-    else:
-        temporizador(st.session_state.rutina)
+        else:
+            temporizador(st.session_state.rutina)
+
+        if st.button("Generar nueva rutina"):
+            st.session_state.rutina_generada = False
+            st.session_state.timer_running = False
+            if 'rutina' in st.session_state:
+                del st.session_state.rutina
+            st.rerun()
 
 
 def main():
