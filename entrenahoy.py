@@ -185,28 +185,43 @@ distribucion_ejercicios = {
     "Tren superior": {"💪 Brazos": 3, "🏋️ Hombros": 2, "🏋️ Abdominales": 1, "🦵 Piernas": 1, "🏃 Aeróbico": 1},
     "Zona media": {"🏋️ Abdominales": 3, "💪 Brazos": 2, "🦵 Piernas": 1, "🏋️ Hombros": 1, "🏃 Aeróbico": 1},
     "Tren inferior": {"🦵 Piernas": 3, "🏋️ Abdominales": 2, "💪 Brazos": 1, "🏋️ Hombros": 1, "🏃 Aeróbico": 1},
-    "Aeróbico": {"🏃 Aeróbico": 3, "🦵 Piernas": 2, "💪 Brazos": 1, "🏋️ Abdominales": 1, "🏋️ Hombros": 1}
+    "Aeróbico": {"🏃 Aeróbico": 3, "🦵 Piernas": 2, "💪 Brazos": 1, "🏋️ Abdominales": 1, "🏋️ Hombros": 1},
+    "Aleatoria": {"🏃 Aeróbico": 3, "🦵 Piernas": 2, "💪 Brazos": 1, "🏋️ Abdominales": 1, "🏋️ Hombros": 1}
 }
 
-def generar_rutina(prioridad, duracion, tiempo_descanso, vueltas):
+import pandas as pd
+import random
+
+def generar_rutina(duracion, tiempo_descanso, vueltas):
+    df=load_data('entrenahoy')
     rutina_base = []
-    for grupo, cantidad in distribucion_ejercicios[prioridad].items():
-        ejercicios_grupo = random.sample(ejercicios[grupo], cantidad)
-        for ejercicio, instruccion in ejercicios_grupo:
+    categorias = df['Categoría'].unique()
+    
+    for categoria in categorias:
+        ejercicios_categoria = df[df['Categoría'] == categoria]
+        ejercicios_seleccionados = ejercicios_categoria.sample(n=2)
+        
+        for _, ejercicio in ejercicios_seleccionados.iterrows():
             if duracion == "Ambos aleatorios":
                 tiempo = random.choice([30, 40])
             else:
                 tiempo = int(duracion.split()[0])
-            rutina_base.append((grupo, ejercicio, tiempo, instruccion))
+            
+            rutina_base.append((
+                ejercicio['Categoría'],
+                f"{ejercicio['Icono Unicode']} {ejercicio['Ejercicio']}",
+                tiempo,
+                ejercicio['Descripción']
+            ))
     
     rutina_completa = []
     for vuelta in range(1, vueltas + 1):
         for i, ejercicio in enumerate(rutina_base, 1):
-            grupo, nombre_ejercicio, tiempo, instruccion = ejercicio
-            rutina_completa.append((grupo, nombre_ejercicio, tiempo, instruccion, vuelta, i, len(rutina_base)))
-            if i < len(rutina_base):  # Añadir descanso después de cada ejercicio, excepto el último
+            categoria, nombre_ejercicio, tiempo, instruccion = ejercicio
+            rutina_completa.append((categoria, nombre_ejercicio, tiempo, instruccion, vuelta, i, len(rutina_base)))
+            if i < len(rutina_base):
                 rutina_completa.append(("Descanso", "Descanso entre ejercicios", tiempo_descanso, "Toma un breve descanso antes del siguiente ejercicio", vuelta, None, None))
-        if vuelta < vueltas:  # Añadir descanso largo entre vueltas
+        if vuelta < vueltas:
             rutina_completa.append(("Descanso", "Descanso entre vueltas", tiempo_descanso * 5, "Toma un descanso más largo antes de la siguiente vuelta", vuelta, None, None))
     
     return rutina_completa
@@ -284,47 +299,47 @@ def temporizador(rutina):
         
         st.rerun()
 
+def spotify_link(text, url):
+    return st.markdown(f"🎵 [{text}]({url})")
+            
 def generar_rutina_interface():
     if 'rutina_generada' not in st.session_state:
         st.session_state.rutina_generada = False
+    
+    if 'mostrar_config' not in st.session_state:
+        st.session_state.mostrar_config = False
 
     if not st.session_state.rutina_generada:
-        prioridad = st.selectbox(
-            "Selecciona la prioridad de tu rutina:",
-            ["Tren superior", "Zona media", "Tren inferior", "Aeróbico"]
-        )
+        col1, col2 = st.columns([4, 1])
+        
+        with col1:
+            if st.button("Rutina Rápida", key="rutina_rapida"):
+                # Usar configuración predeterminada
+                duracion = "30 segundos"
+                tiempo_descanso = 10
+                vueltas = 3
+                generar_rutina_con_config(duracion, tiempo_descanso, vueltas)
 
-        duracion = st.selectbox(
-            "Selecciona la duración de los ejercicios:",
-            ["30 segundos", "40 segundos", "Ambos aleatorios"]
-        )
+        with col2:
+            if st.button("⚙️", key="configuracion"):
+                st.session_state.mostrar_config = not st.session_state.mostrar_config
 
-        tiempo_descanso = st.number_input(
-            "Selecciona el tiempo de descanso entre ejercicios (en segundos):",
-            min_value=5,
-            max_value=60,
-            value=15,
-            step=5
-        )
-
-        vueltas = st.number_input(
-            "Número de vueltas:",
-            min_value=1,
-            max_value=6,
-            value=3
-        )
-
-        if st.button("Generar Rutina", key="generar_rutina"):
-            with st.spinner("Generando rutina personalizada..."):
-                time.sleep(2)  # Espera 2 segundos
-                st.session_state.rutina = generar_rutina(prioridad, duracion, tiempo_descanso, vueltas)
-                st.session_state.prioridad = prioridad
-                st.session_state.duracion = duracion
-                st.session_state.tiempo_descanso = tiempo_descanso
-                st.session_state.vueltas = vueltas
-                st.session_state.rutina_generada = True
-            st.success("¡Rutina generada con éxito!")
-            st.rerun()
+        if st.session_state.mostrar_config:
+            with st.expander("Configuración", expanded=True):
+                duracion = st.selectbox(
+                    "Duración de los ejercicios:",
+                    ["30 segundos", "40 segundos", "Ambos aleatorios"]
+                )
+                tiempo_descanso = st.number_input(
+                    "Tiempo de descanso entre ejercicios (segundos):",
+                    min_value=5, max_value=60, value=10, step=5
+                )
+                vueltas = st.number_input(
+                    "Número de vueltas:",
+                    min_value=1, max_value=6, value=3
+                )
+                if st.button("Generar Rutina Personalizada", key="generar_rutina_personalizada"):
+                    generar_rutina_con_config(duracion, tiempo_descanso, vueltas)
 
     else:
         if 'timer_running' not in st.session_state:
@@ -339,8 +354,7 @@ def generar_rutina_interface():
             st.image("spotify.png", width=200)
             st.markdown("La música se abrirá en la aplicación, debes volver para hacer clic en COMENZAR RUTINA")
 
-            def spotify_link(text, url):
-                return st.markdown(f"🎵 [{text}]({url})")
+
 
             spotify_playlist_url1 = "https://open.spotify.com/intl-es/track/7BExBy99xIVD7moauE290a?si=5d08e19cd3fd4cd2"
             spotify_link("Lista de reproducción Inglés", spotify_playlist_url1)
@@ -358,6 +372,16 @@ def generar_rutina_interface():
                 del st.session_state.rutina
             st.rerun()
 
+def generar_rutina_con_config(duracion, tiempo_descanso, vueltas):
+    with st.spinner("Generando rutina personalizada..."):
+        time.sleep(2)  # Espera 2 segundos
+        st.session_state.rutina = generar_rutina(duracion, tiempo_descanso, vueltas)
+        st.session_state.duracion = duracion
+        st.session_state.tiempo_descanso = tiempo_descanso
+        st.session_state.vueltas = vueltas
+        st.session_state.rutina_generada = True
+    st.success("¡Rutina generada con éxito!")
+    st.rerun()
 
 def main():
     # Crear un menú lateral para seleccionar el tema
