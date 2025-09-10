@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pandas
+python-docx
+gspread
+oauth2client
